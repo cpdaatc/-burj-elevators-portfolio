@@ -307,6 +307,13 @@
     el.textContent = new Date().getFullYear();
   });
 
+
+  /* ---------------- current contact location ---------------- */
+  const currentMapUrl = 'https://maps.app.goo.gl/FBwzYQoLsQJbjM82A?g_st=ic';
+  document.querySelectorAll('a[href="https://goo.gl/maps/gm8SJEYTvW9yrFqHA"]').forEach((link) => {
+    link.href = currentMapUrl;
+  });
+
   /* ---------------- boot ---------------- */
 
   const stored = safeStorage.get();
