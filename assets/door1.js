@@ -1,1 +1,1 @@
-__TO_BE_REPLACED__
+window.BURJ_ASSETS=window.BURJ_ASSETS||{};window.BURJ_ASSETS.door='';
