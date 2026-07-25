@@ -2128,3 +2128,7 @@ a[data-goto] { cursor: pointer; }
   .team-card img { height: 240px; }
 }
 @media (max-width: 480px) { .brand-logo { height: 36px; } }
+
+
+/* Keep phone numbers readable inside RTL layouts */
+.phone-number { direction: ltr; unicode-bidi: isolate; display: inline-block; white-space: nowrap; font-variant-numeric: tabular-nums; }
