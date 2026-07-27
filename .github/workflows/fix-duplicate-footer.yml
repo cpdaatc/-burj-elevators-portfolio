@@ -1,0 +1,71 @@
+name: Fix duplicate footer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-duplicate-footer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove duplicate footer and duplicate lightbox
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          html = path.read_text(encoding='utf-8')
+
+          footer_positions = [m.start() for m in re.finditer(r'<footer class="site-footer">', html)]
+          if len(footer_positions) > 1:
+              second_footer = footer_positions[1]
+              floating = html.find('<div class="floating-actions"', second_footer)
+              if floating != -1:
+                  html = html[:second_footer] + html[floating:]
+
+          lightbox_positions = [m.start() for m in re.finditer(r'<div class="lightbox"', html)]
+          if len(lightbox_positions) > 1:
+              second_lightbox = lightbox_positions[1]
+              floating = html.find('<div class="floating-actions"', second_lightbox)
+              if floating != -1:
+                  html = html[:second_lightbox] + html[floating:]
+
+          # Remove any stray duplicate closing main tag immediately before the retained footer/actions.
+          html = html.replace('\n\n</main>\n<div class="floating-actions"', '\n\n<div class="floating-actions"')
+
+          # Keep phone numbers visually left-to-right inside the Arabic layout.
+          html = html.replace('<p>056 393 8316</p>', '<p><bdi class="phone-number" dir="ltr">056 393 8316</bdi></p>')
+          html = html.replace('<p>056 474 9486</p>', '<p><bdi class="phone-number" dir="ltr">056 474 9486</bdi></p>')
+          html = html.replace('<span>056 393 8316</span>', '<span><bdi class="phone-number" dir="ltr">056 393 8316</bdi></span>')
+          html = html.replace('<span>056 474 9486</span>', '<span><bdi class="phone-number" dir="ltr">056 474 9486</bdi></span>')
+
+          # Keep the approved map link.
+          html = html.replace('https://goo.gl/maps/gm8SJEYTvW9yrFqHA', 'https://maps.app.goo.gl/FBwzYQoLsQJbjM82A?g_st=ic')
+
+          path.write_text(html, encoding='utf-8')
+
+          assert html.count('<footer class="site-footer">') == 1
+          assert html.count('<div class="lightbox"') == 1
+          assert html.count('<div class="floating-actions"') == 1
+
+      - name: Commit correction
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Remove duplicated footer section"
+          git push
