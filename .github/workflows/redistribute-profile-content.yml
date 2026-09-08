@@ -1,0 +1,142 @@
+name: Redistribute portfolio profile content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/redistribute-profile-content.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Confirm current layout before change
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          assert 'id="capabilities"' in html, 'Expected old capabilities card section is missing'
+          assert 'hero-experience-line' not in html, 'Hero experience line already exists'
+          assert 'id="technical-expertise"' not in html, 'Technical expertise section already exists'
+          assert 'id="track-record"' not in html, 'Track record section already exists'
+          print('RED confirmed: profile information is still concentrated in the old capabilities cards.')
+
+      - name: Redistribute information by page purpose
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          html = path.read_text(encoding='utf-8')
+
+          # 1) HERO: keep only the high-level company experience fact.
+          hero_marker = '''      <p data-ar="حلول موثوقة لتوريد وتركيب وصيانة وتحديث المصاعد، مع تصميم كبائن أنيقة وخدمة تناسب المباني السكنية والتجارية." data-en="Reliable elevator supply, installation, maintenance, and modernization, with refined cabin design for residential and commercial properties.">حلول موثوقة لتوريد وتركيب وصيانة وتحديث المصاعد، مع تصميم كبائن أنيقة وخدمة تناسب المباني السكنية والتجارية.</p>'''
+          hero_line = '''\n      <p class="section-kicker hero-experience-line" data-ar="8 سنوات خبرة في مجال المصاعد" data-en="8 years of elevator industry experience">8 سنوات خبرة في مجال المصاعد</p>'''
+          assert html.count(hero_marker) == 1
+          html = html.replace(hero_marker, hero_marker + hero_line, 1)
+
+          # 2) ABOUT / TEAM: keep workforce, supervisor, qualification and logistics together.
+          old_team_heading = '''<h2 data-ar="فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا" data-en="A specialist technical team led by nearly 20 years of Schindler experience">فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا</h2>'''
+          old_team_para = '''<p data-ar="تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة، بقيادة المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة، مع خبرات فنية في أعمال مصاعد شندلر وأوتيس وكوني." data-en="Burj Elevators has an operational workforce of 11: five core technicians and six Ajeer workers providing project support, led by General Technical Supervisor Mr. Mohamed Hussein Mohamed Hussein, with nearly 20 years of experience at Schindler Olayan Elevator Co., alongside technical experience across Schindler, Otis, and Kone elevator systems.">تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة، بقيادة المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة، مع خبرات فنية في أعمال مصاعد شندلر وأوتيس وكوني.</p>'''
+          new_team_heading = '''<h2 data-ar="فريق فني متخصص وجاهزية تشغيلية للمشاريع" data-en="A specialist technical team with operational readiness">فريق فني متخصص وجاهزية تشغيلية للمشاريع</h2>'''
+          new_team_para = '''<p data-ar="تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة حسب متطلبات المشاريع." data-en="Burj Elevators has an operational workforce of 11: five core technicians and six Ajeer workers providing support according to project requirements.">تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة حسب متطلبات المشاريع.</p>'''
+          assert html.count(old_team_heading) == 1
+          assert html.count(old_team_para) == 1
+          html = html.replace(old_team_heading, new_team_heading, 1)
+          html = html.replace(old_team_para, new_team_para, 1)
+
+          team_second_figure = '''<figure class="team-card reveal"><img src="assets/images/team-02.jpg" alt="مقر مؤسسة برج للمصاعد" data-ar-alt="مقر مؤسسة برج للمصاعد" data-en-alt="Burj Elevators premises" loading="lazy"><figcaption data-ar="مقر المؤسسة ومعرضها" data-en="The company premises and showroom">مقر المؤسسة ومعرضها</figcaption></figure>'''
+          team_profile = '''\n</div>\n<div class="statement-grid team-profile-grid">\n  <article class="statement-card reveal"><h3 data-ar="الإشراف الفني" data-en="Technical supervision">الإشراف الفني</h3><p data-ar="يتولى الإشراف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة من 10 مارس 1996م حتى 27 ديسمبر 2015م بمسمى فني تركيب (Fitter 1). ويحمل دبلوم الدراسات الفنية المتقدمة الصناعية بتخصص الهندسة الميكانيكية." data-en="General Technical Supervisor Mr. Mohamed Hussein Mohamed Hussein brings nearly 20 years of experience with Schindler Olayan Elevator Co., from 10 March 1996 to 27 December 2015, serving as Fitter 1. He holds an Advanced Industrial Technical Studies Diploma in Mechanical Engineering.">يتولى الإشراف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة من 10 مارس 1996م حتى 27 ديسمبر 2015م بمسمى فني تركيب (Fitter 1). ويحمل دبلوم الدراسات الفنية المتقدمة الصناعية بتخصص الهندسة الميكانيكية.</p></article>\n  <article class="statement-card reveal"><h3 data-ar="الجاهزية التشغيلية" data-en="Operational readiness">الجاهزية التشغيلية</h3><p data-ar="تتوفر سيارات لتنقل الفنيين والعمالة بين مواقع العمل، بما يدعم توزيع الفرق والاستجابة التشغيلية وفق احتياج كل مشروع." data-en="Vehicles are available to transport technicians and workforce between work sites, supporting flexible team deployment and operational response according to each project's needs.">تتوفر سيارات لتنقل الفنيين والعمالة بين مواقع العمل، بما يدعم توزيع الفرق والاستجابة التشغيلية وفق احتياج كل مشروع.</p></article>\n</div>'''
+          assert html.count(team_second_figure) >= 1
+          # Replace only the About-page team figure occurrence, then consume the original team-grid closing div.
+          about_i = html.index('<div class="page-view" data-view="about" hidden>')
+          fig_i = html.index(team_second_figure, about_i)
+          after_fig = fig_i + len(team_second_figure)
+          assert html[after_fig:].lstrip().startswith('</div>')
+          ws_len = len(html[after_fig:]) - len(html[after_fig:].lstrip())
+          close_i = after_fig + ws_len
+          html = html[:after_fig] + team_profile + html[close_i + len('</div>'):]
+
+          # 3) ABOUT / TECHNICAL EXPERTISE: brand and system expertise belongs with capabilities/services, not company-history cards.
+          expertise_section = '''\n<section class="section section-alt" id="technical-expertise">\n  <div class="container">\n    <div class="section-heading reveal">\n      <p class="section-kicker" data-ar="خبراتنا الفنية" data-en="Technical expertise">خبراتنا الفنية</p>\n      <h2 class="section-title" data-ar="خبرات متعددة في الأنظمة والعلامات العالمية" data-en="Multi-brand elevator systems experience">خبرات متعددة في الأنظمة والعلامات العالمية</h2>\n      <div class="gold-rule"></div>\n      <p class="section-lead" data-ar="يمتلك الفريق خبرات فنية في أعمال التركيب والصيانة والتشغيل والتحديث لمصاعد شندلر وأوتيس وكوني." data-en="The team has technical experience in installation, maintenance, operation, and modernization across Schindler, Otis, and Kone elevator systems.">يمتلك الفريق خبرات فنية في أعمال التركيب والصيانة والتشغيل والتحديث لمصاعد شندلر وأوتيس وكوني.</p>\n    </div>\n    <div class="about-points">\n      <div class="check-point"><span data-ar="Schindler · Otis · Kone" data-en="Schindler · Otis · Kone">Schindler · Otis · Kone</span></div>\n      <div class="check-point"><span data-ar="خبرة في أنظمة Schindler 3300 من فئة Machine Room-Less (MRL)." data-en="Experience with Schindler 3300 Machine Room-Less (MRL) systems.">خبرة في أنظمة Schindler 3300 من فئة Machine Room-Less (MRL).</span></div>\n      <div class="check-point"><span data-ar="تركيب وصيانة وتشغيل وتحديث المصاعد حسب متطلبات الموقع." data-en="Installation, maintenance, operation, and modernization according to site requirements.">تركيب وصيانة وتشغيل وتحديث المصاعد حسب متطلبات الموقع.</span></div>\n    </div>\n  </div>\n</section>\n'''
+          about_i = html.index('<div class="page-view" data-view="about" hidden>')
+          projects_i = html.index('<div class="page-view" data-view="projects" hidden>')
+          mission_marker = '<section class="section section-alt">\n  <div class="container">\n    <div class="statement-grid">'
+          mission_i = html.index(mission_marker, about_i, projects_i)
+          html = html[:mission_i] + expertise_section + html[mission_i:]
+
+          # 4) Remove the old all-in-one capabilities cards now that their information is distributed.
+          cap_start = html.index('<section class="section capabilities-section" id="capabilities">')
+          cap_end = html.index('</section>', cap_start) + len('</section>')
+          html = html[:cap_start] + html[cap_end:]
+
+          # 5) PROJECTS: actual project and government track record belongs before the gallery.
+          projects_i = html.index('<div class="page-view" data-view="projects" hidden>')
+          project_hero_i = html.index('<section class="page-hero">', projects_i)
+          project_hero_end = html.index('</section>', project_hero_i) + len('</section>')
+          track_record = '''\n<section class="section section-alt" id="track-record">\n  <div class="container">\n    <div class="section-heading reveal">\n      <p class="section-kicker" data-ar="سابقة الأعمال" data-en="Track record">سابقة الأعمال</p>\n      <h2 class="section-title" data-ar="خبرات ميدانية وجهات خدمناها" data-en="Field experience and organizations served">خبرات ميدانية وجهات خدمناها</h2>\n      <div class="gold-rule"></div>\n    </div>\n    <div class="statement-grid">\n      <article class="statement-card reveal"><h3 data-ar="10 مصاعد شندلر – نجران" data-en="10 Schindler elevators – Najran">10 مصاعد شندلر – نجران</h3><p data-ar="خبرة ميدانية ضمن أعمال عشرة مصاعد شندلر في نجران." data-en="Field experience involving work on ten Schindler elevators in Najran.">خبرة ميدانية ضمن أعمال عشرة مصاعد شندلر في نجران.</p></article>\n      <article class="statement-card reveal"><h3 data-ar="جهات حكومية في رابغ" data-en="Government organizations in Rabigh">جهات حكومية في رابغ</h3><p data-ar="تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ." data-en="Organizations served include Rabigh Governorate, the Public Prosecution in Rabigh, Narcotics Control in Rabigh, and the Facilities Security Force in Rabigh.">تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ.</p></article>\n    </div>\n  </div>\n</section>\n'''
+          html = html[:project_hero_end] + track_record + html[project_hero_end:]
+
+          path.write_text(html, encoding='utf-8')
+
+      - name: Verify redistributed structure and content
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+
+          home_i = html.index('<div class="page-view" data-view="home" hidden>')
+          about_i = html.index('<div class="page-view" data-view="about" hidden>')
+          projects_i = html.index('<div class="page-view" data-view="projects" hidden>')
+          contact_i = html.index('<div class="page-view" data-view="contact" hidden>')
+
+          home = html[home_i:about_i]
+          about = html[about_i:projects_i]
+          projects = html[projects_i:contact_i]
+
+          assert 'hero-experience-line' in home
+          assert '8 سنوات خبرة في مجال المصاعد' in home
+
+          assert '11 فردًا' in about
+          assert 'محمد حسين محمد حسين' in about
+          assert '10 مارس 1996م' in about and '27 ديسمبر 2015م' in about
+          assert 'Fitter 1' in about
+          assert 'دبلوم الدراسات الفنية المتقدمة الصناعية' in about
+          assert 'تتوفر سيارات' in about
+          assert 'id="technical-expertise"' in about
+          assert 'Schindler · Otis · Kone' in about
+          assert 'Schindler 3300' in about
+
+          assert 'id="track-record"' in projects
+          assert '10 مصاعد شندلر – نجران' in projects
+          assert 'محافظة رابغ' in projects
+          assert 'النيابة العامة في رابغ' in projects
+          assert 'إدارة مكافحة المخدرات في رابغ' in projects
+          assert 'قوة أمن المنشآت في رابغ' in projects
+
+          assert 'id="capabilities"' not in html
+          assert 'capability-card' not in html
+          assert html.count('data-view="home"') == 1
+          assert html.count('data-view="about"') == 1
+          assert html.count('data-view="projects"') == 1
+          assert html.count('data-view="contact"') == 1
+          print('All redistribution and page-boundary checks passed.')
+
+      - name: Commit portfolio redistribution
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Redistribute profile information across portfolio pages"
+          git push
