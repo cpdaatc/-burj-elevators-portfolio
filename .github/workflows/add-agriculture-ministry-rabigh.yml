@@ -1,0 +1,54 @@
+name: Add Ministry of Agriculture Rabigh
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-agriculture-ministry-rabigh.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add Ministry of Agriculture building to government track record
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''<article class="statement-card reveal"><h3 data-ar="جهات حكومية في رابغ" data-en="Government organizations in Rabigh">جهات حكومية في رابغ</h3><p data-ar="تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ." data-en="Organizations served include Rabigh Governorate, the Public Prosecution in Rabigh, Narcotics Control in Rabigh, and the Facilities Security Force in Rabigh.">تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ.</p></article>'''
+
+          new = '''<article class="statement-card reveal"><h3 data-ar="جهات حكومية في رابغ" data-en="Government organizations in Rabigh">جهات حكومية في رابغ</h3><p data-ar="تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، مبنى وزارة الزراعة في رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ." data-en="Organizations served include Rabigh Governorate, the Ministry of Agriculture building in Rabigh, the Public Prosecution in Rabigh, Narcotics Control in Rabigh, and the Facilities Security Force in Rabigh.">تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، مبنى وزارة الزراعة في رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ.</p></article>'''
+
+          if 'مبنى وزارة الزراعة في رابغ' in s:
+              print('Already present; no content change needed.')
+          elif old not in s:
+              raise SystemExit('Expected government organizations card not found; refusing unsafe edit.')
+          else:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+              print('Updated government organizations card.')
+          PY
+
+      - name: Verify content
+        run: |
+          grep -q 'مبنى وزارة الزراعة في رابغ' index.html
+          grep -q 'Ministry of Agriculture building in Rabigh' index.html
+
+      - name: Commit update
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add Ministry of Agriculture building to Rabigh track record'
+          git push
