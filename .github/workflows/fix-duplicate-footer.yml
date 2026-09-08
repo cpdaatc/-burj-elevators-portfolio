@@ -1,4 +1,4 @@
-name: Fix mobile page structure
+name: Update visible technical team profile
 
 on:
   push:
@@ -11,13 +11,24 @@ permissions:
   contents: write
 
 jobs:
-  fix:
+  update:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Repair page-view nesting
+      - name: Confirm regression before change
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          old_heading = 'أيدٍ سعودية وخبرات ميدانية'
+          new_heading = 'فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا'
+          assert old_heading in html, 'Expected old team heading was not found'
+          assert new_heading not in html, 'Visible team section is already updated'
+          print('RED confirmed: visible team section still contains the old profile text')
+
+      - name: Update visible team section
         shell: python
         run: |
           from pathlib import Path
@@ -25,42 +36,34 @@ jobs:
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
 
-          about = '<div class="page-view" data-view="about" hidden>'
-          capabilities = '<section class="section capabilities-section" id="capabilities">'
-          projects = '<div class="page-view" data-view="projects" hidden>'
-          contact = '<div class="page-view" data-view="contact" hidden>'
+          old_heading = '<h2 data-ar="أيدٍ سعودية وخبرات ميدانية" data-en="Saudi leadership, hands-on expertise">أيدٍ سعودية وخبرات ميدانية</h2>'
+          new_heading = '<h2 data-ar="فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا" data-en="A specialist technical team led by nearly 20 years of Schindler experience">فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا</h2>'
 
-          about_i = html.index(about)
-          cap_i = html.index(capabilities)
-          projects_i = html.index(projects)
+          old_paragraph = '<p data-ar="فريق فني ثابت يتولى التركيب والصيانة بنفسه، من أول لحام في الهيكل الحديدي حتى تسليم الكابينة جاهزة للتشغيل." data-en="A permanent technical team that handles installation and maintenance itself, from the first weld on the steel structure to handing over a cabin ready to run.">فريق فني ثابت يتولى التركيب والصيانة بنفسه، من أول لحام في الهيكل الحديدي حتى تسليم الكابينة جاهزة للتشغيل.</p>'
+          new_paragraph = '<p data-ar="تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة، بقيادة المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة، مع خبرات فنية في أعمال مصاعد شندلر وأوتيس وكوني." data-en="Burj Elevators has an operational workforce of 11: five core technicians and six Ajeer workers providing project support, led by General Technical Supervisor Mr. Mohamed Hussein Mohamed Hussein, with nearly 20 years of experience at Schindler Olayan Elevator Co., alongside technical experience across Schindler, Otis, and Kone elevator systems.">تضم القوة التشغيلية للمؤسسة 11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة، بقيادة المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عامًا لدى شركة شندلر العليان للمصاعد المحدودة، مع خبرات فنية في أعمال مصاعد شندلر وأوتيس وكوني.</p>'
 
-          # Capabilities was accidentally placed outside the About page.
-          between_about_cap = html[about_i:cap_i]
-          if between_about_cap.rstrip().endswith('</div>'):
-              prefix = html[:cap_i]
-              trimmed = prefix.rstrip()
-              trimmed = trimmed[:-len('</div>')]
-              cap_block = html[cap_i:projects_i].rstrip()
-              html = trimmed + '\n' + cap_block + '\n</div>\n\n' + html[projects_i:]
-
-          # Projects was missing its page-view closing tag, nesting Contact inside it.
-          projects_i = html.index(projects)
-          contact_i = html.index(contact)
-          between_projects_contact = html[projects_i:contact_i]
-          if between_projects_contact.rstrip().endswith('</section>'):
-              html = html[:contact_i].rstrip() + '\n</div>\n\n' + html[contact_i:]
-
-          # Structural guards.
-          assert html.index(about) < html.index(capabilities) < html.index(projects) < html.index(contact)
-          cap_end = html.index('</section>', html.index(capabilities)) + len('</section>')
-          assert html[cap_end:html.index(projects)].strip() == '</div>'
-          contact_i = html.index(contact)
-          project_end = html.rfind('</section>', html.index(projects), contact_i) + len('</section>')
-          assert html[project_end:contact_i].strip() == '</div>'
-
+          assert html.count(old_heading) == 1, 'Old team heading did not match exactly once'
+          assert html.count(old_paragraph) == 1, 'Old team paragraph did not match exactly once'
+          html = html.replace(old_heading, new_heading, 1)
+          html = html.replace(old_paragraph, new_paragraph, 1)
           path.write_text(html, encoding='utf-8')
 
-      - name: Commit correction
+      - name: Verify updated content and page structure
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          assert 'فريق فني متخصص بإشراف خبرة تمتد لنحو 20 عامًا' in html
+          assert 'محمد حسين محمد حسين' in html
+          assert '11 فردًا: 5 فنيين أساسيين و6 عمال بنظام أجير' in html
+          assert 'شركة شندلر العليان للمصاعد المحدودة' in html
+          assert 'شندلر وأوتيس وكوني' in html
+          assert 'أيدٍ سعودية وخبرات ميدانية' not in html
+          assert '<section class="section capabilities-section" id="capabilities">' in html
+          assert html.count('class="page-view" data-view=') == 4
+          print('GREEN: visible team profile and page structure verified')
+
+      - name: Commit update
         run: |
           if git diff --quiet; then
             echo "No changes required"
@@ -69,5 +72,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Fix mobile page navigation structure"
+          git commit -m "Update visible technical team profile"
           git push
