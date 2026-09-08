@@ -1,4 +1,4 @@
-name: Update portfolio details
+name: Fix mobile page structure
 
 on:
   push:
@@ -11,64 +11,56 @@ permissions:
   contents: write
 
 jobs:
-  update:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update verified profile information
+      - name: Repair page-view nesting
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
 
-          new_section = '''<section class="section capabilities-section" id="capabilities">
-            <div class="container">
-              <div class="section-heading capabilities-heading reveal">
-                <p class="section-kicker" data-ar="قدراتنا وخبراتنا" data-en="Capabilities & Experience">قدراتنا وخبراتنا</p>
-                <h2 class="section-title" data-ar="كفاءة فنية وخبرة تشغيلية موثوقة" data-en="Technical capability and proven operational experience">كفاءة فنية وخبرة تشغيلية موثوقة</h2>
-                <div class="gold-rule"></div>
-                <p data-ar="تعتمد مؤسسة برج للمصاعد على فريق فني متخصص يجمع بين الخبرة الميدانية والإشراف الفني والجاهزية التشغيلية واللوجستية لتنفيذ أعمال التركيب والصيانة والتحديث." data-en="Burj Elevators relies on a specialized technical team combining field experience, technical supervision, and operational and logistical readiness for installation, maintenance, and modernization works.">تعتمد مؤسسة برج للمصاعد على فريق فني متخصص يجمع بين الخبرة الميدانية والإشراف الفني والجاهزية التشغيلية واللوجستية لتنفيذ أعمال التركيب والصيانة والتحديث.</p>
-              </div>
-              <div class="capabilities-grid reveal">
-                <article class="capability-card"><strong dir="ltr">8</strong><h3 data-ar="سنوات خبرة للمؤسسة" data-en="Years of company experience">سنوات خبرة للمؤسسة</h3><p data-ar="خبرة عملية تمتد لثماني سنوات في مجال المصاعد وأعمالها الفنية والميدانية." data-en="Eight years of practical experience in elevator systems and field operations.">خبرة عملية تمتد لثماني سنوات في مجال المصاعد وأعمالها الفنية والميدانية.</p></article>
-                <article class="capability-card"><strong dir="ltr">20</strong><h3 data-ar="عاماً من الخبرة الإشرافية" data-en="Years of supervisory expertise">عاماً من الخبرة الإشرافية</h3><p data-ar="المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عاماً لدى شركة شندلر العليان للمصاعد المحدودة في أعمال التركيب والتشغيل والصيانة." data-en="Technical Supervisor Mr. Mohamed Hussein Mohamed Hussein brings nearly 20 years of experience with Schindler Olayan Elevator Co. in installation, operation, and maintenance.">المشرف العام على الفنيين السيد محمد حسين محمد حسين، بخبرة تقارب 20 عاماً لدى شركة شندلر العليان للمصاعد المحدودة في أعمال التركيب والتشغيل والصيانة.</p></article>
-                <article class="capability-card"><strong dir="ltr">1996–2015</strong><h3 data-ar="خبرة موثقة لدى شندلر" data-en="Documented Schindler experience">خبرة موثقة لدى شندلر</h3><p data-ar="عمل لدى شندلر العليان من 10 مارس 1996م حتى 27 ديسمبر 2015م بمسمى فني تركيب (Fitter 1)." data-en="Worked with Schindler Olayan from 10 March 1996 to 27 December 2015 as Fitter 1.">عمل لدى شندلر العليان من 10 مارس 1996م حتى 27 ديسمبر 2015م بمسمى فني تركيب (Fitter 1).</p></article>
-                <article class="capability-card"><strong dir="ltr">Diploma</strong><h3 data-ar="تأهيل فني ميكانيكي" data-en="Mechanical technical qualification">تأهيل فني ميكانيكي</h3><p data-ar="دبلوم الدراسات الفنية المتقدمة الصناعية، تخصص الهندسة الميكانيكية، من مدرسة محمد صالح حرب بمحافظة أسوان في جمهورية مصر العربية." data-en="Advanced Industrial Technical Studies Diploma in Mechanical Engineering from Mohamed Saleh Harb School, Aswan, Egypt.">دبلوم الدراسات الفنية المتقدمة الصناعية، تخصص الهندسة الميكانيكية، من مدرسة محمد صالح حرب بمحافظة أسوان في جمهورية مصر العربية.</p></article>
-                <article class="capability-card"><strong dir="ltr">11</strong><h3 data-ar="قوة تشغيلية متاحة" data-en="Available operational workforce">قوة تشغيلية متاحة</h3><p data-ar="إجمالي 11 عاملاً: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة حسب متطلبات المشاريع." data-en="A total workforce of 11: five core technicians and six Ajeer workers providing support according to project requirements.">إجمالي 11 عاملاً: 5 فنيين أساسيين و6 عمال بنظام أجير للدعم والمساندة حسب متطلبات المشاريع.</p></article>
-                <article class="capability-card"><strong dir="ltr">Schindler 3300</strong><h3 data-ar="أنظمة بدون غرفة ماكينة" data-en="Machine-room-less systems">أنظمة بدون غرفة ماكينة</h3><p data-ar="خبرة في أعمال مصاعد Schindler 3300 من فئة Machine Room-Less (MRL)." data-en="Experience with Schindler 3300 Machine Room-Less (MRL) elevator systems.">خبرة في أعمال مصاعد Schindler 3300 من فئة Machine Room-Less (MRL).</p></article>
-                <article class="capability-card"><strong dir="ltr">10</strong><h3 data-ar="مصاعد شندلر – نجران" data-en="Schindler elevators – Najran">مصاعد شندلر – نجران</h3><p data-ar="خبرة ميدانية في أعمال عشرة مصاعد شندلر في نجران." data-en="Field experience involving work on ten Schindler elevators in Najran.">خبرة ميدانية في أعمال عشرة مصاعد شندلر في نجران.</p></article>
-                <article class="capability-card"><strong dir="ltr">Otis · Schindler · Kone</strong><h3 data-ar="خبرات متعددة العلامات" data-en="Multi-brand expertise">خبرات متعددة العلامات</h3><p data-ar="خبرات فنية في أعمال تركيب وصيانة مصاعد أوتيس وشندلر وكوني." data-en="Technical experience in installation and maintenance of Otis, Schindler, and Kone elevators.">خبرات فنية في أعمال تركيب وصيانة مصاعد أوتيس وشندلر وكوني.</p></article>
-                <article class="capability-card"><strong class="capability-icon">🏛</strong><h3 data-ar="سابقة أعمال حكومية" data-en="Government-sector track record">سابقة أعمال حكومية</h3><p data-ar="تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ." data-en="Government-sector clients served include Rabigh Governorate, the Public Prosecution in Rabigh, Narcotics Control in Rabigh, and the Facilities Security Force in Rabigh.">تشمل الجهات التي قدمت لها المؤسسة خدماتها: محافظة رابغ، النيابة العامة في رابغ، إدارة مكافحة المخدرات في رابغ، وقوة أمن المنشآت في رابغ.</p></article>
-                <article class="capability-card"><strong class="capability-icon">↔</strong><h3 data-ar="جاهزية لوجستية" data-en="Logistical readiness">جاهزية لوجستية</h3><p data-ar="سيارات متوفرة لتنقل الفنيين والعمالة بين مواقع العمل ودعم الاستجابة التشغيلية." data-en="Vehicles are available for technician and workforce transportation between project sites and to support operational response.">سيارات متوفرة لتنقل الفنيين والعمالة بين مواقع العمل ودعم الاستجابة التشغيلية.</p></article>
-              </div>
-            </div>
-          </section>'''
+          about = '<div class="page-view" data-view="about" hidden>'
+          capabilities = '<section class="section capabilities-section" id="capabilities">'
+          projects = '<div class="page-view" data-view="projects" hidden>'
+          contact = '<div class="page-view" data-view="contact" hidden>'
 
-          pattern = re.compile(r'<section class="section capabilities-section" id="capabilities">.*?</section>', re.S)
-          if not pattern.search(html):
-              raise SystemExit('Capabilities section not found')
-          html = pattern.sub(new_section, html, count=1)
+          about_i = html.index(about)
+          cap_i = html.index(capabilities)
+          projects_i = html.index(projects)
 
-          # Preserve prior corrections.
-          html = html.replace('https://goo.gl/maps/gm8SJEYTvW9yrFqHA', 'https://maps.app.goo.gl/FBwzYQoLsQJbjM82A?g_st=ic')
-          html = html.replace('<p>056 393 8316</p>', '<p><bdi class="phone-number" dir="ltr">056 393 8316</bdi></p>')
-          html = html.replace('<p>056 474 9486</p>', '<p><bdi class="phone-number" dir="ltr">056 474 9486</bdi></p>')
-          html = html.replace('<span>056 393 8316</span>', '<span><bdi class="phone-number" dir="ltr">056 393 8316</bdi></span>')
-          html = html.replace('<span>056 474 9486</span>', '<span><bdi class="phone-number" dir="ltr">056 474 9486</bdi></span>')
+          # Capabilities was accidentally placed outside the About page.
+          between_about_cap = html[about_i:cap_i]
+          if between_about_cap.rstrip().endswith('</div>'):
+              prefix = html[:cap_i]
+              trimmed = prefix.rstrip()
+              trimmed = trimmed[:-len('</div>')]
+              cap_block = html[cap_i:projects_i].rstrip()
+              html = trimmed + '\n' + cap_block + '\n</div>\n\n' + html[projects_i:]
+
+          # Projects was missing its page-view closing tag, nesting Contact inside it.
+          projects_i = html.index(projects)
+          contact_i = html.index(contact)
+          between_projects_contact = html[projects_i:contact_i]
+          if between_projects_contact.rstrip().endswith('</section>'):
+              html = html[:contact_i].rstrip() + '\n</div>\n\n' + html[contact_i:]
+
+          # Structural guards.
+          assert html.index(about) < html.index(capabilities) < html.index(projects) < html.index(contact)
+          cap_end = html.index('</section>', html.index(capabilities)) + len('</section>')
+          assert html[cap_end:html.index(projects)].strip() == '</div>'
+          contact_i = html.index(contact)
+          project_end = html.rfind('</section>', html.index(projects), contact_i) + len('</section>')
+          assert html[project_end:contact_i].strip() == '</div>'
 
           path.write_text(html, encoding='utf-8')
-          assert 'محمد حسين محمد حسين' in html
-          assert '10 مارس 1996م' in html and '27 ديسمبر 2015م' in html
-          assert 'محافظة رابغ' in html and 'النيابة العامة في رابغ' in html
-          assert html.count('<footer class="site-footer">') == 1
-          assert html.count('<div class="lightbox"') == 1
 
-      - name: Commit update
+      - name: Commit correction
         run: |
           if git diff --quiet; then
             echo "No changes required"
@@ -77,5 +69,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Update technical team and government experience"
+          git commit -m "Fix mobile page navigation structure"
           git push
